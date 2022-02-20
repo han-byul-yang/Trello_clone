@@ -1,82 +1,101 @@
-import { Droppable } from 'react-beautiful-dnd'
-import DraggableCards from './DraggableCards';
-import styled from 'styled-components';
-import { Todo, todosAtom } from '../atom';
-import { useForm } from 'react-hook-form';
-import { useRecoilState } from 'recoil';
+import { useForm } from "react-hook-form";
+import { Droppable } from "react-beautiful-dnd";
+import styled from "styled-components";
+import DraggableCards from "./DraggableCards"
+import { Todo, Todoform, todosAtom } from "../atom";
+import { useSetRecoilState } from "recoil";
 
 const Wrapper = styled.div`
-  padding: 20px 10px;
-  padding-top: 30px;
+  width: 300px;
+  padding-top: 10px;
   background-color: ${(props) => props.theme.boardColor};
   border-radius: 5px;
-  min-height: 200px;
+  min-height: 300px;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
-
-const Title = styled.div`
-text-align: center;`
-
-const Area = styled.div<Dragging>`
-background: ${(props) => props.isDraggingOver ? 'purple' : props.draggingFromThisWith ? 'green' : 'pink'};
-flex-grow: 1;
-padding: 20px;`
-
-const Intodos = styled.input`
-`
-
+const Title = styled.h2`
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 18px;
+`;
+interface IAreaProps {
+  isDraggingFromThis: boolean;
+  isDraggingOver: boolean;
+}
+const Area = styled.div<IAreaProps>`
+  background-color: ${(props) =>
+    props.isDraggingOver
+      ? "#dfe6e9"
+      : props.isDraggingFromThis
+      ? "#b2bec3"
+      : "transparent"};
+  flex-grow: 1;
+  transition: background-color 0.3s ease-in-out;
+  padding: 20px;
+`;
 const Form = styled.form`
-width: 100%;
-input{width: 100%}`
-
-interface Boardform {
-    todos : Todo[],
-    boardId : string,
-}
-
-interface Dragging {
-    isDraggingOver : boolean,
-    draggingFromThisWith : boolean,
-}
-
-interface Form {
-    intodo : string,
-}
-/* //현재 선택한 Draggable이 특정 Droppable위에 드래깅 되고 있는지 여부 확인
-isDraggingOver: boolean,
-
-Droppable 위로 드래그하는 Draggable ID
-draggingOverWith: ?DraggableId,
-
-현재 Droppable에서 벗어난 드래깅되고 있는 Draggable ID
-draggingFromThisWith: ?DraggableId,
-
-placeholder가 사용되고 있는지 여부
-isUsingPlaceholder: boolean, */
-
-
-function Board({todos, boardId}: Boardform) {
-  const { register, setValue, handleSubmit } = useForm<Form>()
-  const [putToDo, setPutToDo] = useRecoilState(todosAtom)
-
-  const onValid = ({intodo}: Form) => {
-    setPutToDo((oldtodos)=> {return{...oldtodos, [boardId] : [...oldtodos[boardId], {id: Date.now(), todo: intodo}]}})
-    setValue("intodo", '')
+  width: 100%;
+  input {
+    width: 100%;
   }
-
-    return <Wrapper>
-        <Title>{boardId}</Title>
-    <Form onSubmit={handleSubmit(onValid)}>
-    <Intodos type="text" placeholder='일정 추가' {...register('intodo')}></Intodos>
-    </Form>
-    <Droppable key={boardId} droppableId={boardId}>
-        {(magic, info) => (<Area isDraggingOver={info.isDraggingOver} draggingFromThisWith={Boolean(info.draggingFromThisWith)} ref={magic.innerRef} {...magic.droppableProps}>
-            {todos.map((todo, idx) => <DraggableCards key={todo.id} todo={todo} idx={idx} />)}
-            {magic.placeholder} {/* 위치 고정 placeholder */}
-        </Area>)}
-    </Droppable>
-    </Wrapper>
+`;
+interface IBoardProps {
+  toDos: Todo[];
+  boardId: string;
+}
+interface IForm {
+  toDo: string;
 }
 
-export default Board
+function Board({ toDos, boardId }: IBoardProps) {
+  const setToDos = useSetRecoilState(todosAtom);
+  const { register, setValue, handleSubmit } = useForm<IForm>();
+  const onValid = ({ toDo }: IForm) => {
+    /* const newToDo = {
+      id: Date.now(),
+      text: toDo,
+    };
+    setToDos((allBoards) => {
+      return {
+        ...allBoards,
+        [boardId]: [newToDo, ...allBoards[boardId]],
+      };
+    });
+    setValue("toDo", ""); */
+  };
+  return (
+    <Wrapper>
+      <Title>{boardId}</Title>
+      <Form onSubmit={handleSubmit(onValid)}>
+        <input
+          {...register("toDo", { required: true })}
+          type="text"
+          placeholder={`Add task on ${boardId}`}
+        />
+      </Form>
+      <Droppable droppableId={boardId}>
+        {(magic, info) => (
+          <Area
+            isDraggingOver={info.isDraggingOver}
+            isDraggingFromThis={Boolean(info.draggingFromThisWith)}
+            ref={magic.innerRef}
+            {...magic.droppableProps}
+          >
+            {toDos.map((toDo, index) => (
+              <DraggableCards
+                key={toDo.id}
+                idx={index}
+                todo={toDo}
+              />
+            ))}
+            {magic.placeholder}
+          </Area>
+        )}
+      </Droppable>
+    </Wrapper>
+  );
+}
+export default Board;

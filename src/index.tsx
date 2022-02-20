@@ -4,6 +4,7 @@ import App from './App';
 import {createGlobalStyle, ThemeProvider } from 'styled-components'
 import {darkTheme} from './theme'
 import {RecoilRoot} from 'recoil'
+import BoardContainer from './components/BoardContainer';
 
 const Global = createGlobalStyle`
 @import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300&display=swap');
